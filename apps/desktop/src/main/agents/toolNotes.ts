@@ -43,6 +43,11 @@ export const TOOL_NOTES = [
     'A failed batch might roll back all changes; verify parameters and bodies before using them.',
   '- Reserved parameter names: `floor` is an expression function, not a valid parameter name. ' +
     'Use `floorThickness` instead and update every reference.',
+  '- CAD command names: SolidCraft has `solid.fillet` (not `solid.round`) and `solid.combine` (not ' +
+    '`solid.union`). Check the exact supported command and parameters with `describe_command`; never guess ' +
+    'boolean union arguments.',
+  '- Shell faces: `solid.shell` needs `faces` as a JSON array of points or face names, e.g. ' +
+    '`[[50,35,32]]`, not a quoted string. Verify the face with current `body_topology`.',
   '- CAD failures: Read the actual tool error. Check command syntax with `describe_command` and geometry with ' +
     '`body_topology` before another attempt; do not repeat failed commands with slightly guessed coordinates.',
   '- `describe_command` takes `{"id": "solid.extrude"}`, not `command`.',

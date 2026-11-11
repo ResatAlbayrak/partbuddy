@@ -114,6 +114,9 @@ function objectOr(value: unknown): Record<string, unknown> {
 
 /** One engine command, as `execute` or a `batch` step sends it. */
 function decideCommand(command: string, params: Record<string, unknown>): ToolDecision {
+  if (command === 'solid.round') return refuse('Unknown command solid.round. Use describe_command with id solid.fillet, then supply edges and radius.');
+  if (command === 'solid.union') return refuse('Unknown command solid.union. Check describe_command for solid.combine and its boolean parameters; do not guess a replacement call.');
+  if (command === 'solid.shell' && !Array.isArray(params.faces)) return refuse('solid.shell faces must be a JSON array of face names or 3D points, not a quoted JSON string.');
   if (FILE_COMMANDS.test(command)) {
     return refuse(
       `${command} reads or writes files or settings; PartBuddy does not allow it for the assistant. PartBuddy saves the ` +
@@ -169,6 +172,8 @@ function decideTool(name: string, args: Record<string, unknown>, depth: number):
   if (!ALLOWED.has(name)) return refuse(`${name} is not allowed by PartBuddy. Continue with the other tools.`);
   // SolidCraft refuses nested batches itself; a deeper nesting is refused here rather than walked.
   if (depth > 2) return refuse(`${name} is nested too deeply`);
+  if (name === 'describe_command' && args.id === 'solid.round') return refuse('solid.round does not exist; ask describe_command for solid.fillet instead.');
+  if (name === 'describe_command' && args.id === 'solid.union') return refuse('solid.union does not exist; ask describe_command for solid.combine and check its parameters.');
   if (name === 'set_parameter') return decideCommand(name, args);
   if (name === 'execute') {
     return decideCommand(typeof args.command === 'string' ? args.command : '', objectOr(args.params));

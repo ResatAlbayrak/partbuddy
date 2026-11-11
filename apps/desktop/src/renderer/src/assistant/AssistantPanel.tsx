@@ -325,7 +325,12 @@ function Item({
             </Button>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            {retry ? (
+            {item.detail === 'error_max_turns' && retry && resend ? (
+              <Button variant="primary" onPress={() => resend(t('assistant.failed.continuePrompt'))} data-testid="turn-continue">
+                {t('assistant.failed.continue')}
+              </Button>
+            ) : null}
+            {item.detail !== 'error_max_turns' && retry ? (
               <Button onPress={retry} data-testid="turn-retry">
                 <IconRefresh className="size-icon-sm" aria-hidden />
                 {t('assistant.failed.retry')}

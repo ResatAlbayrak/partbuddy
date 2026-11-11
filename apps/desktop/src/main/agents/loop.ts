@@ -36,6 +36,14 @@ const INSTRUCTIONS = [
 /** Tool rounds per turn before the loop stops. */
 export const MAX_STEPS = 25;
 
+/**
+ * The AI SDK can stop at the round budget while the last turn still asks for
+ * tools. That is not a completed answer, even when the stream ends normally.
+ */
+export function reachedStepCap(steps: readonly { toolCalls: readonly unknown[] }[], limit = MAX_STEPS): boolean {
+  return steps.length >= limit && (steps.at(-1)?.toolCalls.length ?? 0) > 0;
+}
+
 /** Rounds in a row with the same tool calls after which the loop stops: small models can circle. */
 export const REPEAT_LIMIT = 3;
 

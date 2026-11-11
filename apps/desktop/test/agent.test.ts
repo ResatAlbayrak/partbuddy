@@ -12,6 +12,7 @@ import { GateProxy, REPEAT_REASON, type ToolCallRecord, type UpstreamTools } fro
 import { decide } from '../src/main/agents/policy';
 import { cadToolDescription, normalizeToolArguments } from '../src/main/agents/toolArguments';
 import { TOOL_NOTES } from '../src/main/agents/toolNotes';
+import { reachedStepCap } from '../src/main/agents/loop';
 import { reduce, type ConversationItem } from '../src/renderer/src/assistant/store';
 import type { AgentEvent, AgentStatus, ModelChoice } from '../src/shared/contract';
 
@@ -37,6 +38,15 @@ function fakeUpstream() {
   return { upstream, calls };
 }
 
+describe('local agent step budget', () => {
+  it('flags a full tool-calling round at the limit, but not a completed final answer', () => {
+    const unfinished = Array.from({ length: 25 }, (_, index) => ({ toolCalls: index === 24 ? ['execute'] : [] }));
+    expect(reachedStepCap(unfinished)).toBe(true);
+    expect(reachedStepCap(unfinished.slice(0, 24))).toBe(false);
+    expect(reachedStepCap([...unfinished.slice(0, -1), { toolCalls: [] }])).toBe(false);
+  });
+});
+
 describe('tool policy', () => {
   it('rejects reserved parameter names before sending a destructive batch', () => {
     const bad = { commands: [{ command: 'set_parameter', params: { name: 'L', value: 100 } }, { command: 'set_parameter', params: { name: 'floor', value: 3 } }] };
@@ -55,6 +65,25 @@ describe('tool policy', () => {
     expect(normalizeToolArguments('batch', { commands: '{"not":"an array"}' }).commands).toBe('{"not":"an array"}');
     expect(normalizeToolArguments('execute', { commands: encoded }).commands).toBe(encoded);
     expect(cadToolDescription('batch', 'Batch tools')).toContain('JSON array');
+  });
+
+  it('normalizes shell face arrays in batches and direct execute calls', () => {
+    const shell = { command: 'solid.shell', params: { faces: '[[50,35,32]]', thickness: 'wall' } };
+    expect(normalizeToolArguments('batch', { commands: [shell] }).commands).toEqual([{ command: 'solid.shell', params: { faces: [[50, 35, 32]], thickness: 'wall' } }]);
+    expect(normalizeToolArguments('execute', shell).params).toEqual({ faces: [[50, 35, 32]], thickness: 'wall' });
+    expect(normalizeToolArguments('batch', { commands: JSON.stringify([shell]) }).commands).toEqual([{ command: 'solid.shell', params: { faces: [[50, 35, 32]], thickness: 'wall' } }]);
+    expect(normalizeToolArguments('execute', { ...shell, params: { faces: 'not json' } }).params).toEqual({ faces: 'not json' });
+    expect(decide('execute', { ...shell, params: { faces: 'not json' } }).allow).toBe(false);
+  });
+
+  it('blocks hallucinated CAD command names with actionable guidance', () => {
+    for (const command of ['solid.round', 'solid.union']) {
+      expect(decide('execute', { command, params: {} }).allow).toBe(false);
+      expect(decide('batch', { commands: [{ command, params: {} }] }).allow).toBe(false);
+      expect(decide('describe_command', { id: command }).allow).toBe(false);
+    }
+    expect(decide('execute', { command: 'solid.fillet', params: {} }).allow).toBe(true);
+    expect(decide('execute', { command: 'solid.combine', params: {} }).allow).toBe(true);
   });
 
   it('allows reading and modelling tools', () => {

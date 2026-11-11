@@ -5,7 +5,7 @@ import { createOllama } from 'ollama-ai-provider-v2';
 import type { AgentEvent, AgentStatus, ModelChoice, ModelOption, Selection } from '../../shared/contract';
 import { userEvent, type AgentBackend, type PictureKind } from '../agents/assistant';
 import type { UpstreamTools } from '../agents/gateProxy';
-import { contextAfter, instructionsFor, LOOP_NOTICE, MAX_STEPS, policyToolSet, repeatsItself } from '../agents/loop';
+import { contextAfter, instructionsFor, LOOP_NOTICE, MAX_STEPS, policyToolSet, reachedStepCap, repeatsItself } from '../agents/loop';
 import { allowedChoice, choiceStatus, type ChoiceStore } from '../agents/modelChoice';
 import { composeMessage } from '../agents/viewContext';
 import { contextFor, findOllama, LOCAL_CONTEXT, type LocalContextSize, MIN_CONTEXT, OLLAMA_URL, type OllamaFound } from './ollama';
@@ -376,10 +376,16 @@ export class LocalAgent implements AgentBackend {
         if (part.type === 'error') throw part.error instanceof Error ? part.error : new Error(String(part.error));
       }
       this.history.push(...(await result.responseMessages));
-      this.context = contextAfter(await result.steps, model.option.context) ?? this.context;
-      if (repeatsItself({ steps: await result.steps })) {
+      const steps = await result.steps;
+      this.context = contextAfter(steps, model.option.context) ?? this.context;
+      if (repeatsItself({ steps })) {
         this.options.event({ type: 'error', message: LOOP_NOTICE });
         this.options.event({ type: 'done', ok: false, durationMs: Date.now() - started, detail: 'failed' });
+        return;
+      }
+      if (reachedStepCap(steps)) {
+        this.options.event({ type: 'error', message: `PartBuddy stopped after ${MAX_STEPS} model rounds. The design may be incomplete. Continue with the existing design instead of restarting the task.` });
+        this.options.event({ type: 'done', ok: false, durationMs: Date.now() - started, detail: 'error_max_turns' });
         return;
       }
       this.options.event({ type: 'done', ok: true, durationMs: Date.now() - started, detail: null });

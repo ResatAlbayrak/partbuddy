@@ -466,11 +466,13 @@
       "reason": {
         "failed": "Der Assistent hat mit einem Fehler aufgehört.",
         "error_during_execution": "Ein Fehler hat den Assistenten mitten in der Arbeit gestoppt.",
-        "error_max_turns": "Der Assistent hat zu viele Schritte gebraucht und aufgehört.",
+        "error_max_turns": "Der Assistent hat die Grenze von 25 Modellrunden erreicht. Die Konstruktion kann unvollständig sein.",
         "signedOut": "Die Anmeldung bei Claude Code ist abgelaufen. Melde dich neu an, dann sende die Nachricht erneut.",
         "other": "Der Assistent hat aufgehört, bevor er fertig war."
       },
       "retry": "Erneut senden",
+      "continue": "Bestehende Konstruktion fortsetzen",
+      "continuePrompt": "Setze die vorherige Konstruktion vom AKTUELLEN Modellzustand aus fort. Prüfe, welche Features tatsächlich vorhanden sind, und ergänze nur fehlende Teile. Erzeuge keine bereits vorhandene Geometrie doppelt. Melde nur durch SolidCraft bestätigte Ergebnisse.",
       "openLog": "Logdatei zeigen"
     },
     "examples": {

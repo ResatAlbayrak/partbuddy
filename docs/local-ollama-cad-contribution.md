@@ -22,6 +22,7 @@ Improve PartBuddy's local Ollama workflow in two related but independently revie
 | `6ab02b2` | Opt-in **Tool debugging** setting (off by default), showing up to 500 characters of SolidCraft's failed-tool text in the tool card; a few focused tests added. | `agents/loop.ts`, `agents/gateProxy.ts`, settings, IPC, renderer, tests |
 | `fda75f9` | Prompt notes: discover the actual body name with `inspect_design` before `body_topology`. | `agents/toolNotes.ts` |
 | `fcf06ae` | Prompt notes: use `body.rename` to give new bodies unique, descriptive names, then verify the rename. | `agents/toolNotes.ts` |
+| `3204399` | Configurable local-model round budget (25, 50, 100) in persisted settings; the limit used for the next request and the stop notice reflect the selected value. | `local/localAgent.ts`, settings, renderer, i18n, tests |
 
 The last three prompt-guidance changes are **instructions to the model**, not enforced invariants. Body naming is not yet proven reliable in a live test.
 
@@ -102,6 +103,17 @@ Captured failed tool calls:
 5. **Geometric verification:** Check actual volumes, measured dimensions, distinct bodies, holes, and fit instead of relying on the model's narrative.
 6. **Diagnostics review:** Debug details are opt-in and truncated to 500 characters. Review whether additional sanitisation and tests are necessary before upstream submission.
 
+### Local round-budget setting and continuation (implemented, not yet live-tested)
+
+**Commit:** `3204399`
+
+- A persisted `localStepLimit` setting restricts the local agent to `25`, `50`, or `100` model rounds; the default remains `25`.
+- PartBuddy uses the selected limit for the next `streamText` request via `stepCountIs(limit)`.
+- When the final model round still contains tool calls, PartBuddy flags the design as potentially unfinished and offers **Continue existing design** rather than silently reporting success.
+- The continuation button submits a follow-up within the same project and conversation, instructing the model to inspect the current SolidCraft geometry and add only missing features.
+- The user can choose a higher budget independently of the Ollama context window; these are different limits.
+- Settings persistence and the round-stop helper received unit-test updates. A Windows app test and full typecheck are still required.
+
 ## Validation checklist before opening PR
 
 - [x] Live Windows Electron dev server connected to SolidCraft and Ollama.
@@ -110,7 +122,7 @@ Captured failed tool calls:
 - [ ] Run `pnpm lint && pnpm typecheck && pnpm test && pnpm build` on the **final** branch.
 - [ ] Run focused unit tests for tool error extraction, settings persistence, and stop-condition behaviour.
 - [ ] Repeat multi-body body-rename test and document successful/failed commands.
-- [ ] Confirm completion-limit UX with a reproducible instrumented test.
+- [ ] Confirm completion-limit UX and the 25/50/100 setting with a reproducible instrumented test.
 - [ ] Review branch separation / PR scope, test evidence, security and licensing requirements.
 - [ ] Follow `CONTRIBUTING.md` for signed-off commits (DCO), commit-signing expectations, and privacy scan.
 
@@ -122,7 +134,7 @@ Captured failed tool calls:
 
 **Observed benefit:** 64K Ollama context was observed in a runtime check; the debug setting showed actual tool failures in live CAD tests, and the model could recover from selected schema/topology mistakes.
 
-**Limitations:** Prompt guidance alone does not guarantee reliable geometry or naming, and long-task completion reporting is still unresolved.
+**Limitations:** Prompt guidance alone does not guarantee reliable geometry or naming. The local loop now emits an explicit incomplete status at its round limit with a continuation button, and a configurable 25/50/100 step budget has been implemented, but the full end-to-end continuation flow is not yet live-verified.
 
 ---
 

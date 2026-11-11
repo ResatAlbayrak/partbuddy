@@ -141,14 +141,19 @@ function decideCommand(command: string, params: Record<string, unknown>): ToolDe
         'if the command can answer with its content, or continue without it.',
     );
   }
+  if ((command === 'set_parameter' || command === 'parameters.change') && params.name === 'floor') {
+    return refuse('`floor` is a reserved expression function. Use `floorThickness` and update its references.');
+  }
   return { allow: true };
 }
 
 function decideBatch(args: Record<string, unknown>, depth: number): ToolDecision {
-  const steps = Array.isArray(args.commands) ? (args.commands as unknown[]) : [];
+  if (!Array.isArray(args.commands)) return refuse('batch.commands must be a JSON array of command objects, not a string. No commands were executed.');
+  const steps = args.commands as unknown[];
   for (const [index, entry] of steps.entries()) {
     const step = objectOr(entry);
     const command = typeof step.command === 'string' ? step.command : '';
+    if (!command) return refuse(`batch step ${index} must name a command`);
     const params = objectOr(step.params);
     const decision = BATCH_TOOL_STEPS.has(command) ? decideTool(command, params, depth + 1) : decideCommand(command, params);
     if (!decision.allow) return refuse(`batch step ${index} (${command || 'no command'}): ${decision.reason}`);
@@ -164,6 +169,7 @@ function decideTool(name: string, args: Record<string, unknown>, depth: number):
   if (!ALLOWED.has(name)) return refuse(`${name} is not allowed by PartBuddy. Continue with the other tools.`);
   // SolidCraft refuses nested batches itself; a deeper nesting is refused here rather than walked.
   if (depth > 2) return refuse(`${name} is nested too deeply`);
+  if (name === 'set_parameter') return decideCommand(name, args);
   if (name === 'execute') {
     return decideCommand(typeof args.command === 'string' ? args.command : '', objectOr(args.params));
   }

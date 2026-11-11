@@ -10,6 +10,7 @@ import { AgentService } from '../src/main/agents/agentService';
 import { findClaudeCode, parseStreamLine } from '../src/main/agents/claudeCode';
 import { GateProxy, REPEAT_REASON, type ToolCallRecord, type UpstreamTools } from '../src/main/agents/gateProxy';
 import { decide } from '../src/main/agents/policy';
+import { cadToolDescription, normalizeToolArguments } from '../src/main/agents/toolArguments';
 import { TOOL_NOTES } from '../src/main/agents/toolNotes';
 import { reduce, type ConversationItem } from '../src/renderer/src/assistant/store';
 import type { AgentEvent, AgentStatus, ModelChoice } from '../src/shared/contract';
@@ -37,6 +38,25 @@ function fakeUpstream() {
 }
 
 describe('tool policy', () => {
+  it('rejects reserved parameter names before sending a destructive batch', () => {
+    const bad = { commands: [{ command: 'set_parameter', params: { name: 'L', value: 100 } }, { command: 'set_parameter', params: { name: 'floor', value: 3 } }] };
+    const decision = decide('batch', bad);
+    expect(decision.allow).toBe(false);
+    if (!decision.allow) expect(decision.reason).toContain('floor');
+    expect(decide('set_parameter', { name: 'floor', value: 3 }).allow).toBe(false);
+    expect(decide('execute', { command: 'parameters.change', params: { name: 'floor', value: 3 } }).allow).toBe(false);
+    expect(decide('batch', { commands: '[]' }).allow).toBe(false);
+  });
+
+  it('repairs only well-formed JSON-stringified command arrays', () => {
+    const encoded = JSON.stringify([{ command: 'solid.box', params: { length: 30 } }]);
+    expect(normalizeToolArguments('batch', { commands: encoded }).commands).toEqual([{ command: 'solid.box', params: { length: 30 } }]);
+    expect(normalizeToolArguments('batch', { commands: 'not json' }).commands).toBe('not json');
+    expect(normalizeToolArguments('batch', { commands: '{"not":"an array"}' }).commands).toBe('{"not":"an array"}');
+    expect(normalizeToolArguments('execute', { commands: encoded }).commands).toBe(encoded);
+    expect(cadToolDescription('batch', 'Batch tools')).toContain('JSON array');
+  });
+
   it('allows reading and modelling tools', () => {
     expect(decide('inspect_design', {})).toEqual({ allow: true });
     expect(decide('execute', { command: 'solid.extrude', params: {} })).toEqual({ allow: true });

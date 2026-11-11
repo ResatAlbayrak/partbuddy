@@ -7,6 +7,7 @@ import { Server, WebStandardStreamableHTTPServerTransport } from '@modelcontextp
 
 import { REPEAT_LIMIT, toolFailureReason } from './loop';
 import { decide } from './policy';
+import { normalizeToolArguments } from './toolArguments';
 import { withToolNotes } from './toolNotes';
 
 /** A tool as the upstream MCP server lists it, passed through unchanged. */
@@ -151,7 +152,7 @@ export class GateProxy {
     server.setRequestHandler('tools/list', async () => ({ tools: await this.upstream.listTools() }));
     server.setRequestHandler('tools/call', async (request) => {
       const name = request.params.name;
-      const args = request.params.arguments ?? {};
+      const args = normalizeToolArguments(name, request.params.arguments ?? {});
       this.sequence += 1;
       const id = `call-${this.sequence}`;
       const summary = JSON.stringify(args).slice(0, 2000);

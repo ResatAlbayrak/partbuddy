@@ -3,6 +3,7 @@ import { jsonSchema, tool, type StopCondition, type ToolSet } from 'ai';
 import type { AgentEvent } from '../../shared/contract';
 import type { ToolResult, UpstreamTools } from './gateProxy';
 import { decide } from './policy';
+import { cadToolDescription, normalizeToolArguments } from './toolArguments';
 import { ANSWER_GUIDANCE, QUESTION_GUIDANCE } from './questions';
 import { RESEARCH_GUIDANCE } from './research';
 import { withToolNotes } from './toolNotes';
@@ -113,7 +114,7 @@ export async function policyToolSet(upstream: UpstreamTools, options: PolicyTool
   const tools: ToolSet = {};
   for (const definition of await upstream.listTools()) {
     tools[definition.name] = tool({
-      description: definition.description ?? definition.name,
+      description: cadToolDescription(definition.name, definition.description ?? definition.name),
       inputSchema: jsonSchema(definition.inputSchema as Parameters<typeof jsonSchema>[0]),
       ...(options.providerOptions ? { providerOptions: options.providerOptions } : {}),
       execute: async (input: unknown) => callTool(upstream, definition.name, (input ?? {}) as Record<string, unknown>, options),
@@ -122,7 +123,8 @@ export async function policyToolSet(upstream: UpstreamTools, options: PolicyTool
   return tools;
 }
 
-async function callTool(upstream: UpstreamTools, name: string, args: Record<string, unknown>, options: PolicyToolOptions): Promise<string> {
+async function callTool(upstream: UpstreamTools, name: string, input: Record<string, unknown>, options: PolicyToolOptions): Promise<string> {
+  const args = normalizeToolArguments(name, input);
   const id = options.nextId();
   const summary = JSON.stringify(args).slice(0, 2000);
   const decision = decide(name, args);
@@ -134,10 +136,12 @@ async function callTool(upstream: UpstreamTools, name: string, args: Record<stri
   try {
     const result = await upstream.callTool(name, args, id);
     options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: result.isError !== true, reason: toolFailureReason(result) });
-    return resultText(result);
+    return result.isError === true
+      ? `SOLIDCRAFT TOOL FAILED: ${resultText(result)}\nThis command did not complete. Inspect the design before claiming that the feature exists.`
+      : resultText(result);
   } catch (error) {
     const message = `SolidCraft tool failed: ${error instanceof Error ? error.message : String(error)}`;
     options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: false, reason: message.slice(0, 500) });
-    return message;
+    return `${message}\nThis command did not complete. Inspect the design before claiming that the feature exists.`;
   }
 }

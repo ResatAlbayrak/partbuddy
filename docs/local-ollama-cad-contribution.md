@@ -94,6 +94,18 @@ Captured failed tool calls:
 
 **Tests still required:** Type-check and unit test the final branch, confirm the AI SDK passes malformed arguments to the normalizer rather than rejecting them at schema validation, and reproduce/verify the end-of-budget notice and continuation button in the Windows dev UI. Verify the app does not duplicate geometry on continuation.
 
+### Repeated USB-C sketch batch rejection (2026-11-11)
+
+**Observed:** The local Qwen 27B CAD agent sent the same `batch` command three times with `commands` as a string containing heavily escaped JSON, and `sketch.rectangle.two_point` used a single string such as `p0: ["USBCOffset + WallThickness, USBCHeight / 2"]` instead of two coordinates. PartBuddy refused the batch three times and then correctly stopped the identical-call loop. No USB opening was made. This is distinct from the configured 25/50/100 model-round cap.
+
+**Implemented in `4550629` (live test pending):**
+- Decode the batch array only when the provided text is valid JSON, double JSON-encoded text, or an array whose JSON quotes have been unnecessarily escaped. Reject malformed or non-command arrays; all decoded commands still pass PartBuddy's existing policy.
+- For `sketch.rectangle.two_point`, split a one-element `p0` or `p1` string into two expressions only when there is exactly one unambiguous top-level comma; preserve commas within parenthesized expressions such as `max(A,B)`.
+- Update the batch tool description and model guidance with an explicit correct coordinate-array example.
+- Add regression tests for the observed string encodings, point expressions, ambiguous input and unchanged policy rejection of prohibited file commands.
+
+**Validation:** The JSON-decoding cases were independently checked in an isolated JavaScript test. A complete TypeScript test run and a live PartBuddy/SolidCraft replay are **not yet verified**. Not all invalid CAD commands, topology selections, or incorrect sketches can be automatically repaired.
+
 ## Open issues / follow-up work
 
 1. **Step-budget stop (implemented, live verification pending):** The local agent now uses the configured 25/50/100 round limit, checks whether the last model round still requested tools, and reports that the design may be incomplete. The earlier 25-call correlation was observed in a live test; the exact AI-provider stop reason remains uninstrumented.

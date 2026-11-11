@@ -29,6 +29,12 @@ export const TOOL_NOTES = [
   '- CAD body names: A feature name, user description or intended object name is not necessarily its SolidCraft ' +
     'body name. Before `body_topology`, get the current exact body name from `inspect_design` (or reuse a body name ' +
     'confirmed by its latest output). Never invent a body name; a newly created solid may be named `Body1`.',
+  '- Body naming: Name each new SolidCraft body immediately after creation. Read its exact current name from ' +
+    '`inspect_design`, check `describe_command` for `body.rename`, then rename it to a short, unique, descriptive ' +
+    'name in the user\'s language (for example `Gehäuse-Unterteil`, `Deckel`, `Schraubdom-vorne-links`). ' +
+    'Feature and sketch names do not rename the body. Use the new body name in all later tool calls and verify the ' +
+    'rename in `inspect_design`. For multiple bodies, name each one according to its actual role; do not invent a ' +
+    'role for uncertain geometry. Do not leave final bodies as `Body1`, `Body2` and so on.',
   '- CAD topology: Call `body_topology` for the current body before choosing a face or edge, and again after a ' +
     'geometry-changing step. A `faces` point must lie on the intended face; every `edges` point must lie on ' +
     'the intended edge, not on its adjacent face. Check the actual edge endpoints to distinguish vertical ' +

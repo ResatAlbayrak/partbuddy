@@ -26,6 +26,9 @@ export const TOOL_NOTES = [
   '- CAD command syntax: Before an unfamiliar `execute` or `batch` command, call `describe_command` with its exact ' +
     'id (for example `{"id":"solid.shell"}`). Do not invent parameter names: `solid.shell` takes `faces` and ' +
     '`thickness` (not `inset`); `solid.fillet` takes `edges` and `radius`.',
+  '- CAD body names: A feature name, user description or intended object name is not necessarily its SolidCraft ' +
+    'body name. Before `body_topology`, get the current exact body name from `inspect_design` (or reuse a body name ' +
+    'confirmed by its latest output). Never invent a body name; a newly created solid may be named `Body1`.',
   '- CAD topology: Call `body_topology` for the current body before choosing a face or edge, and again after a ' +
     'geometry-changing step. A `faces` point must lie on the intended face; every `edges` point must lie on ' +
     'the intended edge, not on its adjacent face. Check the actual edge endpoints to distinguish vertical ' +

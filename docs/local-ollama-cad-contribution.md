@@ -67,6 +67,19 @@ Captured failed tool calls:
 
 **Regression priority:** Distinguish observed geometric changes from tool-result text; show an explicit *incomplete* outcome when the step budget is exhausted; prevent claiming completion after tool errors; use actual JSON arrays for `batch.commands`; validate key features, including an actual through-cut, before reporting success. These are observations and proposed acceptance criteria, **not yet implemented fixes**.
 
+### First deterministic CAD-tool validation pass
+
+**Implemented (not yet verified in the Windows live build):**
+- Added `agents/toolArguments.ts`: valid, stringified `batch.commands` arrays are decoded before forwarding to SolidCraft, for the local loop and the Claude Code gate. Invalid payloads remain invalid and are rejected.
+- Added a policy preflight: `floor` as a `set_parameter` / `parameters.change` name is refused with a specific explanation before a whole batch can fail; `batch.commands` must be an actual array after normalization.
+- Extended the effective tool descriptions and tool notes with concrete argument types, reserved parameter names, and midpoint-based fillet selection guidance.
+- Failed SolidCraft tool results sent back to the **local model** are explicitly marked as failures, with an instruction to verify the design instead of claiming completion.
+- Added targeted policy/normalization unit assertions to `apps/desktop/test/agent.test.ts`.
+
+**Commits:** `f7edd62` (normalizer/helper), `26fe544` (wiring, policy checks, tests).
+
+**Still open:** Prove with the live SolidCraft runtime that erroneous `batch.commands` calls reach the normalizer (schema validation may reject malformed model input earlier); test whether the failure marker reduces false claims; verify the full TypeScript build and unit tests. This does not validate arbitrary CAD geometry, automatically correct topology coordinates, or address the silent stop at the local step budget.
+
 ## Open issues / follow-up work
 
 1. **Silent end of long tasks (priority):** `MAX_STEPS = 25` and `stopWhen: [stepCountIs(MAX_STEPS), repeatsItself]` exist in the local agent loop. The code currently treats a completed stream as successful unless it detects exact repeated rounds. **Hypothesis:** reaching the step limit can produce `done: true` without completion notice. This has **not yet been proven** to be the reason for the 19-query housing test; log the actual stop reason / step count and add an automated regression test.

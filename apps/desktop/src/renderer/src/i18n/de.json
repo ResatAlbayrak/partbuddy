@@ -231,6 +231,7 @@
     "stop": "Stopp",
     "stopped": "Abgebrochen, bevor die Antwort fertig war.",
     "tool": {
+      "errorDetails": "Fehlerdetails (Debug)",
       "running": "läuft",
       "done": "fertig",
       "failed": "fehlgeschlagen",
@@ -873,6 +874,10 @@
     "ollamaContext": {
       "label": "Ollama-Kontextfenster",
       "hint": "Kontextgröße für lokale Ollama-Modelle. Größere Werte benötigen mehr Arbeitsspeicher und VRAM."
+    },
+    "toolDebug": {
+      "label": "Werkzeug-Debugmodus",
+      "hint": "Zeigt bei neuen fehlgeschlagenen CAD-Aufrufen die tatsächliche SolidCraft-Fehlermeldung in den Details. Standardmäßig ausgeschaltet."
     },
     "restartNote": "Gilt nach Neustart",
     "search": {

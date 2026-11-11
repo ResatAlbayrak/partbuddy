@@ -231,6 +231,7 @@
     "stop": "Stop",
     "stopped": "Stopped before the answer was complete.",
     "tool": {
+      "errorDetails": "Error details (debug)",
       "running": "running",
       "done": "done",
       "failed": "failed",
@@ -873,6 +874,10 @@
     "ollamaContext": {
       "label": "Ollama context window",
       "hint": "Context size for local Ollama models. Larger values require more RAM and VRAM."
+    },
+    "toolDebug": {
+      "label": "Tool debugging",
+      "hint": "Show SolidCraft's actual error message in the details of new failed CAD tool calls. Off by default."
     },
     "restartNote": "Applies after a restart",
     "search": {

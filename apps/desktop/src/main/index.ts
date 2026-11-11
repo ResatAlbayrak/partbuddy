@@ -512,7 +512,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     if (updates.enabled && settingsStore.get('checkUpdates')) setTimeout(() => void updates.check(), 10_000);
     // Interface size, start behaviour and update check (2026-11-07): the size applies at once, the rest at the next start.
-    const appSettings = () => ({ zoom: settingsStore.get('zoom'), startPage: settingsStore.get('startPage'), checkUpdates: settingsStore.get('checkUpdates') });
+    const appSettings = () => ({ zoom: settingsStore.get('zoom'), startPage: settingsStore.get('startPage'), checkUpdates: settingsStore.get('checkUpdates'), toolDebug: settingsStore.get('toolDebug') });
     const applyZoom = () => {
       const zoom = settingsStore.get('zoom');
       mainWindow?.webContents.setZoomFactor(zoom);
@@ -542,7 +542,11 @@ if (!app.requestSingleInstanceLock()) {
       // A failed turn and its reason go to the log file too, where the chat points for details.
       if (event.type === 'done' && !event.ok) log(`assistant turn ended: ${event.detail ?? 'failed'}`);
       if (event.type === 'error') log(`assistant error: ${event.message.slice(0, 300)}`);
-      bridge.emit(mainWindow?.webContents ?? null, eventChannels.agentEvent, event);
+      // Do not send or save diagnostic tool output unless the user enabled it.
+      const visible = event.type === 'tool' && event.decision === 'allowed' && !settingsStore.get('toolDebug')
+        ? { ...event, reason: undefined }
+        : event;
+      bridge.emit(mainWindow?.webContents ?? null, eventChannels.agentEvent, visible);
     };
     const steps = new WorkLog({
       history: () => supervisor.history(),

@@ -5,7 +5,7 @@ import { Readable } from 'node:stream';
 
 import { Server, WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/server';
 
-import { REPEAT_LIMIT } from './loop';
+import { REPEAT_LIMIT, toolFailureReason } from './loop';
 import { decide } from './policy';
 import { withToolNotes } from './toolNotes';
 
@@ -166,11 +166,11 @@ export class GateProxy {
       this.onCall({ id, name, summary, decision: 'allowed' });
       try {
         const result = await this.upstream.callTool(name, args, id);
-        this.onCall({ id, name, summary, decision: 'allowed', ok: result.isError !== true });
+        this.onCall({ id, name, summary, decision: 'allowed', ok: result.isError !== true, reason: toolFailureReason(result) });
         return result as never;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.onCall({ id, name, summary, decision: 'allowed', ok: false });
+        this.onCall({ id, name, summary, decision: 'allowed', ok: false, reason: `SolidCraft tool failed: ${message}`.slice(0, 500) });
         return { content: [{ type: 'text' as const, text: `SolidCraft tool failed: ${message}` }], isError: true };
       }
     });

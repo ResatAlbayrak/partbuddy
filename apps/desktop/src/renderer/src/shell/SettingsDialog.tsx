@@ -430,6 +430,25 @@ function ResearchToggle() {
   );
 }
 
+/** Detailed SolidCraft errors are optional and apply immediately to new tool calls. */
+function ToolDebugToggle() {
+  const enabled = useStudio((state) => state.toolDebug);
+  const setToolDebug = useStudio((state) => state.setToolDebug);
+  return (
+    <Toggle
+      id="toolDebug"
+      isSelected={enabled}
+      onChange={(value) => {
+        setToolDebug(value);
+        void platform().settings.setApp({ key: 'toolDebug', value }).then((next) => {
+          setToolDebug(next.toolDebug);
+        });
+      }}
+      testId="tool-debug"
+    />
+  );
+}
+
 /** Configurable context window for local Ollama models. */
 function OllamaContextSetting() {
   const [size, setSize] = useState<
@@ -783,6 +802,7 @@ export function SettingsDialog() {
   const [revision, setRevision] = useState(0);
   const reload = () => {
     setRevision((value) => value + 1);
+    void platform().settings.app().then(({ toolDebug }) => useStudio.getState().setToolDebug(toolDebug));
   };
   const listRef = useRef<HTMLDivElement>(null);
   const results = useMemo(() => searchSettings(query, (key) => t(key)), [query, t]);
@@ -910,6 +930,9 @@ export function SettingsDialog() {
                   <Group id="work">
                     <Setting id="research">
                       <ResearchToggle />
+                    </Setting>
+                    <Setting id="toolDebug">
+                      <ToolDebugToggle />
                     </Setting>
                   </Group>
                   <Group id="rules">

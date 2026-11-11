@@ -1,6 +1,7 @@
 import { IconCheck, IconLoader2, IconShieldX, IconX } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 
+import { useStudio } from '../state/store';
 import { card } from './Fold';
 import type { ConversationItem } from './store';
 
@@ -12,6 +13,7 @@ export type ToolItem = Extract<ConversationItem, { kind: 'tool' }>;
  */
 export function ToolCall({ item, framed = false }: { item: ToolItem; framed?: boolean }) {
   const { t } = useTranslation();
+  const debug = useStudio((state) => state.toolDebug);
   const icon =
     item.decision === 'denied' ? (
       <IconShieldX className="size-icon-sm shrink-0 text-warning" aria-hidden />
@@ -37,7 +39,13 @@ export function ToolCall({ item, framed = false }: { item: ToolItem; framed?: bo
         <span className="truncate font-medium">{item.name}</span>
         <span className="shrink-0 text-xs text-text-subtle">{state}</span>
       </span>
-      {item.reason ? <span className="pl-5 text-text-muted">{item.reason}</span> : null}
+      {item.decision === 'denied' && item.reason ? <span className="pl-5 text-text-muted">{item.reason}</span> : null}
+      {debug && item.decision === 'allowed' && item.ok === false && item.reason ? (
+        <details className="pl-5 text-xs text-text-muted">
+          <summary className="cursor-pointer">{t('assistant.tool.errorDetails')}</summary>
+          <p className="mt-1 whitespace-pre-wrap break-words">{item.reason}</p>
+        </details>
+      ) : null}
       {item.summary && /^[[{]/.test(item.summary.trim()) ? (
         // Raw call data only on request, wrapped instead of cut (audit C-03).
         <details className="pl-5 text-xs text-text-subtle">

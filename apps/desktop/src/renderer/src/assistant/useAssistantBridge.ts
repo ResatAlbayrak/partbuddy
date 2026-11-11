@@ -75,6 +75,9 @@ export function useChatPersistence(): void {
 /** Follows the agent status and event stream from the main process. */
 export function useAssistantBridge(): void {
   useEffect(() => {
+    void platform().settings.app().then(({ toolDebug }) => {
+      useStudio.getState().setToolDebug(toolDebug);
+    }).catch(() => undefined);
     const api = platform().agent;
     const offStatus = api.onStatus((status) => {
       useAssistant.getState().setState(status);

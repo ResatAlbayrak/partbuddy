@@ -22,6 +22,8 @@ export const settingsSchema = z.object({
   setupDone: z.boolean().catch(false),
   /** The assistant may search the web and read pages (B7). */
   webResearch: z.boolean().catch(true),
+  /** Show detailed SolidCraft tool errors in the assistant when enabled. */
+  toolDebug: z.boolean().catch(false),
   /** Claude Code may run with an API key (off by default, decided 2026-11-04). */
   /** Context window for local Ollama models. */
   ollamaContextSize: z.union([
@@ -51,7 +53,7 @@ export type SettingKey = keyof Settings;
 /** What "reset" puts back per section of the settings dialog; the first-start flag is never reset. */
 export const RESET_KEYS: Record<Exclude<SettingsReset, 'solidcraft' | 'print' | 'all'>, readonly SettingKey[]> = {
   general: ['language', 'theme', 'projectsFolder', 'zoom', 'startPage', 'checkUpdates'],
-  assistant: ['webResearch', 'claudeApiBilling', 'models', 'ollamaContextSize'],
+  assistant: ['webResearch', 'claudeApiBilling', 'models', 'ollamaContextSize', 'toolDebug'],
 };
 
 /**

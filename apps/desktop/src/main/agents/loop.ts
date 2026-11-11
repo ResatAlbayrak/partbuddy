@@ -80,6 +80,26 @@ function resultText(result: ToolResult): string {
     .join('\n');
 }
 
+/** Short SolidCraft error detail for an opt-in diagnostics view; successful calls have none. */
+export function toolFailureReason(result: ToolResult): string | undefined {
+  if (result.isError !== true) return undefined;
+  const output = resultText(result).trim();
+  try {
+    const parsed: unknown = JSON.parse(output);
+    if (parsed && typeof parsed === 'object') {
+      const reply = parsed as Record<string, unknown>;
+      const failure = reply.failed;
+      if (failure && typeof failure === 'object' && typeof (failure as Record<string, unknown>).error === 'string') {
+        return String((failure as Record<string, unknown>).error).slice(0, 500);
+      }
+      if (typeof reply.error === 'string') return reply.error.slice(0, 500);
+    }
+  } catch {
+    // SolidCraft often returns plain text instead of JSON.
+  }
+  return (output || 'SolidCraft returned an error without details').slice(0, 500);
+}
+
 export interface PolicyToolOptions {
   /** A new id for each call, shown with its tool card. */
   nextId(): string;
@@ -113,10 +133,11 @@ async function callTool(upstream: UpstreamTools, name: string, args: Record<stri
   options.event({ type: 'tool', id, name, summary, decision: 'allowed' });
   try {
     const result = await upstream.callTool(name, args, id);
-    options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: result.isError !== true });
+    options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: result.isError !== true, reason: toolFailureReason(result) });
     return resultText(result);
   } catch (error) {
-    options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: false });
-    return `SolidCraft tool failed: ${(error as Error).message}`;
+    const message = `SolidCraft tool failed: ${error instanceof Error ? error.message : String(error)}`;
+    options.event({ type: 'tool', id, name, summary, decision: 'allowed', ok: false, reason: message.slice(0, 500) });
+    return message;
   }
 }

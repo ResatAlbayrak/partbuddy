@@ -185,6 +185,9 @@ interface StudioState {
   /** The option the settings were opened at (a `SETTINGS` id); it is scrolled to and highlighted once. */
   settingsOption: string | null;
   setSettingsSection: (section: SettingsSection | null, option?: string | null) => void;
+  /** Show the error returned by SolidCraft inside failed tool cards (off by default). */
+  toolDebug: boolean;
+  setToolDebug: (enabled: boolean) => void;
   /** Which tab of the printer and material profiles shows. */
   profilesTab: ProfilesTab;
   setProfilesTab: (tab: ProfilesTab) => void;
@@ -346,6 +349,10 @@ export const useStudio = create<StudioState>()((set) => ({
   settingsOption: null,
   setSettingsSection: (settingsSection, settingsOption = null) => {
     set({ settingsSection, settingsOption });
+  },
+  toolDebug: false,
+  setToolDebug: (toolDebug) => {
+    set({ toolDebug });
   },
   profilesTab: 'printer',
   setProfilesTab: (profilesTab) => {

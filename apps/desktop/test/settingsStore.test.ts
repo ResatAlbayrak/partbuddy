@@ -20,7 +20,7 @@ afterEach(() => {
 describe('settings store', () => {
   it('starts with the defaults', () => {
     const store = new SettingsStore(join(folder(), 'settings.json'));
-    expect(store.all()).toEqual({ language: 'system', theme: 'system', projectsFolder: null, zoom: 1, startPage: 'home', checkUpdates: true, setupDone: false, webResearch: true, claudeApiBilling: false, ollamaContextSize: 16384, models: {} });
+    expect(store.all()).toEqual({ language: 'system', theme: 'system', projectsFolder: null, zoom: 1, startPage: 'home', checkUpdates: true, setupDone: false, webResearch: true, claudeApiBilling: false, ollamaContextSize: 16384, toolDebug: false, models: {} });
   });
 
   it('takes over the files of earlier versions and leaves them in place', () => {
@@ -41,6 +41,7 @@ describe('settings store', () => {
       webResearch: false,
       claudeApiBilling: true,
       ollamaContextSize: 16384,
+      toolDebug: false,
       models: { chatgpt: { model: 'gpt-x', effort: 'high' } },
     });
     expect(existsSync(join(dir, 'general.json'))).toBe(true);
@@ -68,6 +69,15 @@ describe('settings store', () => {
     const store = new SettingsStore(file);
     expect(store.get('webResearch')).toBe(true);
     expect(readFileSync(`${file}.damaged`, 'utf8')).toBe('{ not json');
+  });
+
+  it('keeps tool debugging off by default and resets it with assistant settings', () => {
+    const store = new SettingsStore(join(folder(), 'settings.json'));
+    expect(store.get('toolDebug')).toBe(false);
+    store.set('toolDebug', true);
+    expect(store.get('toolDebug')).toBe(true);
+    store.reset(RESET_KEYS.assistant);
+    expect(store.get('toolDebug')).toBe(false);
   });
 
   it('resets a section and nothing else', () => {

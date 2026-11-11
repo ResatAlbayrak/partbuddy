@@ -40,7 +40,7 @@ The tests below were performed interactively with `qwen3.6:27b-coding`. Observat
 
 ### Exact failures worth retaining for regression tests
 
-- `invalid parameters for \`model.edges\`: no body \`Quader\`` when an intended feature name was used as the body name.
+- SolidCraft returned **invalid parameters for `model.edges`: no body `Quader`** when an intended feature name was used as the body name.
 - `solid.hole` rejects `position: [[10,10,0],[70,10,0],[10,40,0],[70,40,0]]`; it requires one `[x,y,z]` position per invocation (or an appropriate sketch-based call).
 - `floor` cannot be used as a parameter name because it is a function name. The subsequent `unknown parameter L` error was consistent with the preceding parameter-creation batch failing.
 - `sketch.fillet` failed with `a must be a line` after the model chose incorrect sketch entities.

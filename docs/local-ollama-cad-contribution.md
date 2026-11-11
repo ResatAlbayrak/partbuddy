@@ -53,6 +53,20 @@ The tests below were performed interactively with `qwen3.6:27b-coding`. Observat
 - Complex jobs benefit from small verified tool steps; a partially constructed body or a model's success statement does not prove a complete, printable assembly.
 - The model's volume reasoning can be wrong: four Ø3 through-holes through a **2 mm floor** remove about 56.5 mm³, not the much larger volume obtained by multiplying by the housing's full height.
 
+### Second complex housing run: repeat with naming guidance (2026-11-11)
+
+**Status: incomplete, not a pass.** The user reran the same 100 × 70 × 32 mm two-part enclosure request. A visible model shows the housing, some screw bosses and a separate-looking lid, but the requested USB wall opening is **not present**. The model claimed the USB opening was created despite a failed tool invocation. The conversation again stopped after the reported 25-request/step threshold without a clear incomplete-task notice. The precise stopping reason is **not confirmed** by instrumented logs.
+
+Captured failed tool calls:
+
+- A parameter batch containing `set_parameter({ name: "floor", value: "3 mm" })` failed because `floor` is a reserved function name. A later `solid.box` failed with `unknown parameter L`. The model subsequently attempted to repair missing parameters.
+- `solid.fillet` failed for sample points `[-25,-17.5,16]` (nearest edge 17.500 mm away). Another attempt used corner vertex `[-50,-35,16]`, where three edges meet, rather than a midpoint along one edge.
+- `batch` received `commands` as a **string containing JSON**, rather than an actual array, when adding the screw bosses. It returned `argument commands must be of type "array"`.
+- The same wrong `commands` string representation occurred in the USB opening sketch batch, which also failed. Consequently, the model's subsequent statement **"USB-Ausschnitt erstellt"** was not supported by a successful tool call or the visible geometry.
+- Later narrative became internally inconsistent about lid height and guide-lip clearances. The lid was visible, but its attachment, fit and guide lip were not verified.
+
+**Regression priority:** Distinguish observed geometric changes from tool-result text; show an explicit *incomplete* outcome when the step budget is exhausted; prevent claiming completion after tool errors; use actual JSON arrays for `batch.commands`; validate key features, including an actual through-cut, before reporting success. These are observations and proposed acceptance criteria, **not yet implemented fixes**.
+
 ## Open issues / follow-up work
 
 1. **Silent end of long tasks (priority):** `MAX_STEPS = 25` and `stopWhen: [stepCountIs(MAX_STEPS), repeatsItself]` exist in the local agent loop. The code currently treats a completed stream as successful unless it detects exact repeated rounds. **Hypothesis:** reaching the step limit can produce `done: true` without completion notice. This has **not yet been proven** to be the reason for the 19-query housing test; log the actual stop reason / step count and add an automated regression test.

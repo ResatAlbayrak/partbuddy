@@ -79,7 +79,7 @@ Captured failed tool calls:
 
 **Commits:** `f7edd62` (normalizer/helper), `26fe544` (wiring, policy checks, tests).
 
-**Still open:** Prove with the live SolidCraft runtime that erroneous `batch.commands` calls reach the normalizer (schema validation may reject malformed model input earlier); test whether the failure marker reduces false claims; verify the full TypeScript build and unit tests. This does not validate arbitrary CAD geometry, automatically correct topology coordinates, or address the silent stop at the local step budget.
+**Still open:** Prove with the live SolidCraft runtime that erroneous `batch.commands` calls reach the normalizer (schema validation may reject malformed model input earlier); test whether the failure marker reduces false claims; verify the full TypeScript build and unit tests. This does not validate arbitrary CAD geometry or automatically correct topology coordinates. The silent step-budget stop now has a proposed user-visible remedy, but requires a live test.
 
 ### Third tool-error report and 25-round limit (2026-11-11)
 
@@ -96,8 +96,8 @@ Captured failed tool calls:
 
 ## Open issues / follow-up work
 
-1. **Silent end of long tasks (priority):** `MAX_STEPS = 25` and `stopWhen: [stepCountIs(MAX_STEPS), repeatsItself]` exist in the local agent loop. The code currently treats a completed stream as successful unless it detects exact repeated rounds. **Hypothesis:** reaching the step limit can produce `done: true` without completion notice. This has **not yet been proven** to be the reason for the 19-query housing test; log the actual stop reason / step count and add an automated regression test.
-2. **Explicit continuation:** When interrupted at a legitimate step cap, show a visible *incomplete* status and offer a way to continue the **existing** design, rather than telling the model to recreate everything.
+1. **Step-budget stop (implemented, live verification pending):** The local agent now uses the configured 25/50/100 round limit, checks whether the last model round still requested tools, and reports that the design may be incomplete. The earlier 25-call correlation was observed in a live test; the exact AI-provider stop reason remains uninstrumented.
+2. **Explicit continuation (implemented, live verification pending):** PartBuddy shows a continuation action after the configured step cap and submits a follow-up about the existing geometry. Check that it reliably resumes without duplicating features.
 3. **Body naming:** The guidance was added after the test with five `BodyN` bodies; rerun a multi-body test and verify `body.rename` is actually executed and later used.
 4. **Batch failure recovery:** Check each batch result, avoid reusing parameters from a failed parameter batch, and validate sketch-entity identifiers before fillets.
 5. **Geometric verification:** Check actual volumes, measured dimensions, distinct bodies, holes, and fit instead of relying on the model's narrative.

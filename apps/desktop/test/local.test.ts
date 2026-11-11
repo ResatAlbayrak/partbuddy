@@ -42,10 +42,26 @@ describe('local models through Ollama (F8)', () => {
     expect(modelNames(TAGS)).toEqual(['qwen3.5:9b', 'embeddinggemma:latest', 'tiny:1b']);
   });
 
-  it('runs a model with 16K context at most and refuses one too small for the tools', () => {
-    expect(contextFor({ id: 'a', tools: true, vision: false, context: 262144, loaded: false })).toBe(16384);
-    expect(contextFor({ id: 'b', tools: true, vision: false, context: 4096, loaded: false })).toBeNull();
-    expect(contextFor({ id: 'c', tools: true, vision: false, context: null, loaded: false })).toBe(16384);
+  it('supports configurable context sizes', () => {
+    const model = {
+      id: 'qwen',
+      tools: true,
+      vision: false,
+      context: 262144,
+      loaded: false,
+    };
+
+    expect(contextFor(model)).toBe(16384);
+    expect(contextFor(model, 32768)).toBe(32768);
+    expect(contextFor(model, 65536)).toBe(65536);
+
+    // Never exceed the model's actual capacity
+    expect(contextFor({ ...model, context: 32768 }, 65536))
+      .toBe(32768);
+
+    // Reject models below minimum requirements
+    expect(contextFor({ ...model, context: 4096 }))
+      .toBeNull();
   });
 
   it('offers only models that call tools and have room for them', async () => {

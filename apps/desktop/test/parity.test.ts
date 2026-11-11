@@ -65,6 +65,8 @@ const PARITY: Record<InvokeChannel, Parity> = {
   [invokeChannels.agentChooseModel]: { reason: ASSISTANT },
   [invokeChannels.agentResearch]: { reason: ASSISTANT },
   [invokeChannels.agentSetResearch]: { reason: ASSISTANT },
+  [invokeChannels.agentOllamaContext]: { reason: ASSISTANT },
+  [invokeChannels.agentSetOllamaContext]: { reason: ASSISTANT },
   // What the user looks at, reported for the assistant.
   [invokeChannels.viewerState]: { tool: 'partbuddy_view' },
   [invokeChannels.windowTitleBar]: { reason: APP },

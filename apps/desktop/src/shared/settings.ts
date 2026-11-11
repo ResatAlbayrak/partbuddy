@@ -23,6 +23,12 @@ export const settingsSchema = z.object({
   /** The assistant may search the web and read pages (B7). */
   webResearch: z.boolean().catch(true),
   /** Claude Code may run with an API key (off by default, decided 2026-11-04). */
+  /** Context window for local Ollama models. */
+  ollamaContextSize: z.union([
+    z.literal(16384),
+    z.literal(32768),
+    z.literal(65536),
+  ]).catch(16384),
   claudeApiBilling: z.boolean().catch(false),
   /** Model and effort per route for new chats (B1); entries that do not fit are skipped one by one. */
   models: z
@@ -45,7 +51,7 @@ export type SettingKey = keyof Settings;
 /** What "reset" puts back per section of the settings dialog; the first-start flag is never reset. */
 export const RESET_KEYS: Record<Exclude<SettingsReset, 'solidcraft' | 'print' | 'all'>, readonly SettingKey[]> = {
   general: ['language', 'theme', 'projectsFolder', 'zoom', 'startPage', 'checkUpdates'],
-  assistant: ['webResearch', 'claudeApiBilling', 'models'],
+  assistant: ['webResearch', 'claudeApiBilling', 'models', 'ollamaContextSize'],
 };
 
 /**

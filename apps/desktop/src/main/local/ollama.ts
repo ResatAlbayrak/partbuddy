@@ -17,6 +17,10 @@ export const MIN_CONTEXT = 16384;
  */
 export const LOCAL_CONTEXT = 16384;
 
+export const CONTEXT_OPTIONS = [16384, 32768, 65536] as const;
+
+export type LocalContextSize = typeof CONTEXT_OPTIONS[number];
+
 export interface LocalModel {
   id: string;
   /** The model can call tools; without it, it cannot work on the design. */
@@ -58,8 +62,15 @@ export function modelNames(body: unknown): string[] {
 }
 
 /** The context to run a model with, or null when it is too small for an agent session. */
-export function contextFor(model: LocalModel): number | null {
-  const context = Math.min(model.context ?? LOCAL_CONTEXT, LOCAL_CONTEXT);
+export function contextFor(
+  model: LocalModel,
+  requested: LocalContextSize = LOCAL_CONTEXT,
+): number | null {
+  const context = Math.min(
+    model.context ?? requested,
+    requested,
+  );
+
   return context >= MIN_CONTEXT ? context : null;
 }
 

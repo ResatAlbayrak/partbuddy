@@ -47,6 +47,8 @@ export const invokeChannels = {
   agentChooseModel: 'agent:choose-model',
   agentResearch: 'agent:research',
   agentSetResearch: 'agent:set-research',
+  agentOllamaContext: 'agent:ollama-context',
+  agentSetOllamaContext: 'agent:set-ollama-context',
   viewerState: 'viewer:state',
   windowTitleBar: 'window:title-bar',
   windowTheme: 'window:theme',

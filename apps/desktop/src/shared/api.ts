@@ -335,6 +335,10 @@ export interface PartBuddyApi {
     /** Whether the assistant may search the web and read pages (B7); applies from the next conversation. */
     research(): Promise<boolean>;
     setResearch(allow: boolean): Promise<boolean>;
+    /** Returns the configured context window for local Ollama models, in tokens. */
+    ollamaContext(): Promise<16384 | 32768 | 65536>;
+    /** Saves the Ollama context window; applies to subsequent model requests. */
+    setOllamaContext(size: 16384 | 32768 | 65536): Promise<16384 | 32768 | 65536>;
     /** Sends a message; what is selected in the view goes with it as a short note. */
     send(text: string, selections?: Selection[], answer?: MessageAnswer, sketch?: OutgoingSketch, photos?: Uint8Array[], drawing?: OutgoingDrawingMessage): Promise<void>;
     stop(): Promise<void>;

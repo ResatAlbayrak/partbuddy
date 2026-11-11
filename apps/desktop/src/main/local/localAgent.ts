@@ -8,7 +8,7 @@ import type { UpstreamTools } from '../agents/gateProxy';
 import { contextAfter, instructionsFor, LOOP_NOTICE, MAX_STEPS, policyToolSet, repeatsItself } from '../agents/loop';
 import { allowedChoice, choiceStatus, type ChoiceStore } from '../agents/modelChoice';
 import { composeMessage } from '../agents/viewContext';
-import { contextFor, findOllama, LOCAL_CONTEXT, MIN_CONTEXT, OLLAMA_URL, type OllamaFound } from './ollama';
+import { contextFor, findOllama, LOCAL_CONTEXT, type LocalContextSize, MIN_CONTEXT, OLLAMA_URL, type OllamaFound } from './ollama';
 import { findOpenAiServers, loadInLmStudio, OPENAI_SERVERS, type OpenAiServer } from './openaiServers';
 import { findStrata, STRATA_EFFORTS, STRATA_URL, type StrataFound } from './strata';
 
@@ -31,6 +31,8 @@ export interface LocalAgentOptions {
   url?: string;
   strataUrl?: string;
   openAiServers?: { name: OpenAiServer['name']; url: string }[];
+  /** Requested context window for local Ollama models. */
+  contextSize?: () => LocalContextSize;
 }
 
 /** A model the route can run, with the server that runs it. */
@@ -67,20 +69,20 @@ const windowOf = (context: number | null) => (context ? { context } : {});
 const contextNote = (context: number | null) => (context ? `${String(Math.round(context / 1024))}K context` : null);
 
 /** The models an agent session can use: they call tools (or are still to be tested) and have room for SolidCraft's tools. */
-export function usableModels(ollama: OllamaFound | null, strata: StrataFound | null = null, servers: OpenAiServer[] = [], failed: ReadonlySet<string> = new Set()): Runnable[] {
+export function usableModels(ollama: OllamaFound | null, strata: StrataFound | null = null, servers: OpenAiServer[] = [], failed: ReadonlySet<string> = new Set(), localContext: LocalContextSize = LOCAL_CONTEXT,): Runnable[] {
   const runnable: Runnable[] = (ollama?.models ?? [])
-    .filter((model) => model.tools && contextFor(model) !== null)
+    .filter((model) => model.tools && contextFor(model, localContext) !== null)
     .map((model) => ({
       option: {
         id: model.id,
         name: `${model.id} · Ollama`.slice(0, 80),
         efforts: [],
-        ...describe([model.loaded ? 'In memory' : 'Loads on first use', contextNote(contextFor(model)), !model.vision && 'Cannot see pictures']),
-        ...windowOf(contextFor(model)),
+        ...describe([model.loaded ? 'In memory' : 'Loads on first use', contextNote(contextFor(model, localContext)), !model.vision && 'Cannot see pictures']),
+        ...windowOf(contextFor(model, localContext)),
       },
       server: 'Ollama',
       vision: model.vision,
-      numCtx: contextFor(model),
+      numCtx: contextFor(model, localContext),
       openAiBase: null,
       serverModel: model.id,
       toolTest: false,
@@ -160,9 +162,15 @@ export class LocalAgent implements AgentBackend {
 
   constructor(private readonly options: LocalAgentOptions) {}
 
-  private runnable(): Runnable[] {
-    return usableModels(this.ollama, this.strata, this.servers, this.failed);
-  }
+ private runnable(): Runnable[] {
+  return usableModels(
+    this.ollama,
+    this.strata,
+    this.servers,
+    this.failed,
+    this.options.contextSize?.() ?? LOCAL_CONTEXT,
+  );
+}
 
   private models(): ModelOption[] {
     return this.runnable().map((entry) => entry.option);

@@ -34,4 +34,12 @@ export class AssistantSettings implements ChoiceStore {
   set(route: AgentKind, choice: ModelChoice): void {
     this.store.set('models', { ...this.store.get('models'), [route]: modelChoiceSchema.parse(choice) });
   }
+
+  ollamaContextSize(): 16384 | 32768 | 65536 {
+    return this.store.get('ollamaContextSize');
+  }
+
+  setOllamaContextSize(size: 16384 | 32768 | 65536): void {
+    this.store.set('ollamaContextSize', size);
+  }
 }

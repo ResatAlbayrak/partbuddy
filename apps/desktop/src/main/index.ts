@@ -29,7 +29,7 @@ import { Questions } from './agents/questions';
 import { WorkLog } from './agents/workLog';
 import { withBlockTool } from './agents/blockTool';
 import { withMechanismTool } from './agents/mechanismTool';
-import { blockPhrase, describeUserAction } from '../shared/stepPhrases';
+import { blockPhrase, describeUserAction, type StepPhrase } from '../shared/stepPhrases';
 import { ChatGptAccount } from './chatgpt/account';
 import { ChatGptAgent } from './chatgpt/chatgptAgent';
 import { LocalAgent } from './local/localAgent';
@@ -644,6 +644,7 @@ if (!app.requestSingleInstanceLock()) {
       event: emitEvent,
       changed,
       log,
+      contextSize: () => assistantSettings.ollamaContextSize(),
       choices: assistantSettings,
       ...(process.env.PARTBUDDY_OLLAMA_URL ? { url: process.env.PARTBUDDY_OLLAMA_URL } : {}),
       ...(process.env.PARTBUDDY_STRATA_URL ? { strataUrl: process.env.PARTBUDDY_STRATA_URL } : {}),
@@ -753,6 +754,19 @@ if (!app.requestSingleInstanceLock()) {
       await agent.stop();
       return undefined;
     });
+
+    // Ollama context window settings
+    bridge.handle(invokeChannels.agentOllamaContext, () =>
+      assistantSettings.ollamaContextSize()
+    );
+
+    // Persist the selected Ollama context size and refresh the model status.
+    bridge.handle(invokeChannels.agentSetOllamaContext, ({ size }) => {
+      assistantSettings.setOllamaContextSize(size);
+      agent.changed();
+      return assistantSettings.ollamaContextSize();
+    });
+
     // Research on the web (B7): Claude Code reads the switch when a conversation starts, ChatGPT per request.
     bridge.handle(invokeChannels.agentResearch, () => assistantSettings.webResearch());
     bridge.handle(invokeChannels.agentSetResearch, ({ allow }) => {
@@ -1235,7 +1249,7 @@ if (!app.requestSingleInstanceLock()) {
       assistantIdle();
       const name = logoTitle(move.logo).slice(0, 40);
       const only = move.by === null && move.centre === null;
-      const phrase =
+      const phrase: StepPhrase =
         only && move.depth
           ? { key: 'logoDepth' as const, values: { name, depth: move.depth } }
           : only && move.rotate

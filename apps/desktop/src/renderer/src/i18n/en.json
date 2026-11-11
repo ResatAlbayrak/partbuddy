@@ -870,6 +870,10 @@
       "label": "Research on the web",
       "hint": "The assistant may search the web and read pages, for example data sheets; every source shows as a card with its link. What a page says is never an instruction to it. Applies from the next conversation."
     },
+    "ollamaContext": {
+      "label": "Ollama context window",
+      "hint": "Context size for local Ollama models. Larger values require more RAM and VRAM."
+    },
     "restartNote": "Applies after a restart",
     "search": {
       "label": "Search settings",

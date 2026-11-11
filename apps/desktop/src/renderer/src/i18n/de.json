@@ -870,6 +870,10 @@
       "label": "Im Web recherchieren",
       "hint": "Der Assistent darf im Web suchen und Seiten lesen, etwa Datenblätter; jede Quelle erscheint als Karte mit Link. Was auf einer Seite steht, ist nie eine Anweisung an ihn. Gilt ab dem nächsten Gespräch."
     },
+    "ollamaContext": {
+      "label": "Ollama-Kontextfenster",
+      "hint": "Kontextgröße für lokale Ollama-Modelle. Größere Werte benötigen mehr Arbeitsspeicher und VRAM."
+    },
     "restartNote": "Gilt nach Neustart",
     "search": {
       "label": "Einstellungen durchsuchen",

@@ -430,6 +430,53 @@ function ResearchToggle() {
   );
 }
 
+/** Configurable context window for local Ollama models. */
+function OllamaContextSetting() {
+  const [size, setSize] = useState<
+    16384 | 32768 | 65536 | null
+  >(null);
+
+  useEffect(() => {
+    let live = true;
+
+    void platform().agent.ollamaContext().then((value) => {
+      if (live) setSize(value);
+    });
+
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (size === null) return null;
+
+  return (
+    <Segmented
+      id="ollamaContext"
+      value={String(size)}
+      options={[
+        { id: '16384', label: '16K' },
+        { id: '32768', label: '32K' },
+        { id: '65536', label: '64K' },
+      ]}
+      onChange={(next) => {
+        const value = Number(next);
+
+        if (
+          value === 16384 ||
+          value === 32768 ||
+          value === 65536
+        ) {
+          void platform()
+            .agent.setOllamaContext(value)
+            .then(setSize);
+        }
+      }}
+      testId="settings-ollama-context"
+    />
+  );
+}
+
 /**
  * Designing without support and the design rule groups (2026-11-07): kept with the print settings,
  * which the assistant reads. One copy for all rows, so no switch saves over another with a stale one.
@@ -855,6 +902,9 @@ export function SettingsDialog() {
                       <div className="flex flex-col gap-3">
                         <AssistantChoice />
                       </div>
+                    </Setting>
+                    <Setting id="ollamaContext">
+                      <OllamaContextSetting />
                     </Setting>
                   </Group>
                   <Group id="work">

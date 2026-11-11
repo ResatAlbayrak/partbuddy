@@ -175,6 +175,11 @@ const api: PartBuddyApi = {
     chooseModel: (choice, asDefault) => ipcRenderer.invoke(invokeChannels.agentChooseModel, { choice, asDefault }),
     research: () => ipcRenderer.invoke(invokeChannels.agentResearch),
     setResearch: (allow) => ipcRenderer.invoke(invokeChannels.agentSetResearch, { allow }),
+    ollamaContext: () =>
+      ipcRenderer.invoke(invokeChannels.agentOllamaContext),
+
+    setOllamaContext: (size) =>
+      ipcRenderer.invoke(invokeChannels.agentSetOllamaContext, { size }),
     signIn: () => ipcRenderer.invoke(invokeChannels.agentSignIn),
     signOut: () => ipcRenderer.invoke(invokeChannels.agentSignOut),
     onStatus: (listener) => subscribe(eventChannels.agentStatus, listener),

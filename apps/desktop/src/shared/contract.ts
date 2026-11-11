@@ -609,6 +609,16 @@ export const researchSourceSchema = z
     links: z.array(z.object({ url: webUrl, title: z.string().max(300) }).strict()).max(8).optional(),
   })
   .strict();
+export const ollamaContextSchema = z.union([
+  z.literal(16384),
+  z.literal(32768),
+  z.literal(65536),
+]);
+
+export const ollamaContextRequestSchema = z.object({
+  size: ollamaContextSchema,
+}).strict();
+
 export const researchRequestSchema = z.object({ allow: z.boolean() }).strict();
 
 export const agentEventSchema = z.discriminatedUnion('type', [
@@ -1204,6 +1214,8 @@ export const invokeContract = {
   [invokeChannels.agentChooseModel]: { request: modelChoiceRequestSchema, response: assistantStateSchema },
   [invokeChannels.agentResearch]: { request: none, response: z.boolean() },
   [invokeChannels.agentSetResearch]: { request: researchRequestSchema, response: z.boolean() },
+  [invokeChannels.agentOllamaContext]: { request: none, response: ollamaContextSchema, },
+  [invokeChannels.agentSetOllamaContext]: { request: ollamaContextRequestSchema, response: ollamaContextSchema, },
   [invokeChannels.agentSignOut]: { request: none, response: none },
   [invokeChannels.agentSend]: { request: agentMessageSchema, response: none },
   [invokeChannels.agentStop]: { request: none, response: none },

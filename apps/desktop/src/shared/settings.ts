@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { agentKindSchema, languageSchema, modelChoiceSchema, startPageSchema, themeSchema, zoomSchema, type SettingsReset } from './contract';
+import { agentKindSchema, languageSchema, localStepLimitSchema, modelChoiceSchema, startPageSchema, themeSchema, zoomSchema, type SettingsReset } from './contract';
 
 /**
  * Every stored setting of the installation with its type, default and validation, in one place.
@@ -24,6 +24,8 @@ export const settingsSchema = z.object({
   webResearch: z.boolean().catch(true),
   /** Show detailed SolidCraft tool errors in the assistant when enabled. */
   toolDebug: z.boolean().catch(false),
+  /** Maximum model rounds for one local-model request; the next request picks up changes. */
+  localStepLimit: localStepLimitSchema.catch(25),
   /** Claude Code may run with an API key (off by default, decided 2026-11-04). */
   /** Context window for local Ollama models. */
   ollamaContextSize: z.union([
@@ -53,7 +55,7 @@ export type SettingKey = keyof Settings;
 /** What "reset" puts back per section of the settings dialog; the first-start flag is never reset. */
 export const RESET_KEYS: Record<Exclude<SettingsReset, 'solidcraft' | 'print' | 'all'>, readonly SettingKey[]> = {
   general: ['language', 'theme', 'projectsFolder', 'zoom', 'startPage', 'checkUpdates'],
-  assistant: ['webResearch', 'claudeApiBilling', 'models', 'ollamaContextSize', 'toolDebug'],
+  assistant: ['webResearch', 'claudeApiBilling', 'models', 'ollamaContextSize', 'toolDebug', 'localStepLimit'],
 };
 
 /**

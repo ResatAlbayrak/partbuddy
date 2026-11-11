@@ -466,7 +466,7 @@
       "reason": {
         "failed": "The assistant stopped with an error.",
         "error_during_execution": "An error stopped the assistant while it worked.",
-        "error_max_turns": "The assistant reached the 25-round limit. The design may be incomplete.",
+        "error_max_turns": "The assistant reached the configured round limit. The design may be incomplete.",
         "signedOut": "Your Claude Code sign-in has expired. Sign in again, then send the message again.",
         "other": "The assistant stopped before it finished."
       },
@@ -876,6 +876,10 @@
     "ollamaContext": {
       "label": "Ollama context window",
       "hint": "Context size for local Ollama models. Larger values require more RAM and VRAM."
+    },
+    "localStepLimit": {
+      "label": "Model rounds per request",
+      "hint": "Maximum rounds for local models (25, 50 or 100). Applies to the next request; the existing design can be continued when the limit is reached."
     },
     "toolDebug": {
       "label": "Tool debugging",

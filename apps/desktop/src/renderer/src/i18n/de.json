@@ -466,7 +466,7 @@
       "reason": {
         "failed": "Der Assistent hat mit einem Fehler aufgehört.",
         "error_during_execution": "Ein Fehler hat den Assistenten mitten in der Arbeit gestoppt.",
-        "error_max_turns": "Der Assistent hat die Grenze von 25 Modellrunden erreicht. Die Konstruktion kann unvollständig sein.",
+        "error_max_turns": "Der Assistent hat die eingestellte Grenze für Modellrunden erreicht. Die Konstruktion kann unvollständig sein.",
         "signedOut": "Die Anmeldung bei Claude Code ist abgelaufen. Melde dich neu an, dann sende die Nachricht erneut.",
         "other": "Der Assistent hat aufgehört, bevor er fertig war."
       },
@@ -876,6 +876,10 @@
     "ollamaContext": {
       "label": "Ollama-Kontextfenster",
       "hint": "Kontextgröße für lokale Ollama-Modelle. Größere Werte benötigen mehr Arbeitsspeicher und VRAM."
+    },
+    "localStepLimit": {
+      "label": "Modellschritte pro Auftrag",
+      "hint": "Maximale Modellrunden für lokale KI-Modelle (25, 50 oder 100). Gilt ab dem nächsten Auftrag; bei Erreichen kann die bestehende Konstruktion fortgesetzt werden."
     },
     "toolDebug": {
       "label": "Werkzeug-Debugmodus",

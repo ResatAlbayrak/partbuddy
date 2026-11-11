@@ -20,7 +20,7 @@ afterEach(() => {
 describe('settings store', () => {
   it('starts with the defaults', () => {
     const store = new SettingsStore(join(folder(), 'settings.json'));
-    expect(store.all()).toEqual({ language: 'system', theme: 'system', projectsFolder: null, zoom: 1, startPage: 'home', checkUpdates: true, setupDone: false, webResearch: true, claudeApiBilling: false, ollamaContextSize: 16384, toolDebug: false, models: {} });
+    expect(store.all()).toEqual({ language: 'system', theme: 'system', projectsFolder: null, zoom: 1, startPage: 'home', checkUpdates: true, setupDone: false, webResearch: true, claudeApiBilling: false, ollamaContextSize: 16384, toolDebug: false, localStepLimit: 25, models: {} });
   });
 
   it('takes over the files of earlier versions and leaves them in place', () => {
@@ -42,6 +42,7 @@ describe('settings store', () => {
       claudeApiBilling: true,
       ollamaContextSize: 16384,
       toolDebug: false,
+      localStepLimit: 25,
       models: { chatgpt: { model: 'gpt-x', effort: 'high' } },
     });
     expect(existsSync(join(dir, 'general.json'))).toBe(true);
@@ -69,6 +70,20 @@ describe('settings store', () => {
     const store = new SettingsStore(file);
     expect(store.get('webResearch')).toBe(true);
     expect(readFileSync(`${file}.damaged`, 'utf8')).toBe('{ not json');
+  });
+
+  it('persists, validates and resets the model-round limit', () => {
+    const file = join(folder(), 'settings.json');
+    const store = new SettingsStore(file);
+    expect(store.get('localStepLimit')).toBe(25);
+    store.set('localStepLimit', 50);
+    expect(new SettingsStore(file).get('localStepLimit')).toBe(50);
+    store.set('localStepLimit', 100);
+    expect(new SettingsStore(file).get('localStepLimit')).toBe(100);
+    store.reset(RESET_KEYS.assistant);
+    expect(store.get('localStepLimit')).toBe(25);
+    writeFileSync(file, JSON.stringify({ localStepLimit: 999 }));
+    expect(new SettingsStore(file).get('localStepLimit')).toBe(25);
   });
 
   it('keeps tool debugging off by default and resets it with assistant settings', () => {

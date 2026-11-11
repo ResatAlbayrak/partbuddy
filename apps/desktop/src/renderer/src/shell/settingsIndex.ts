@@ -31,6 +31,7 @@ export const SETTINGS: readonly SettingEntry[] = [
   { id: 'research', section: 'assistant', group: 'work', label: 'settings.research.label', hint: 'settings.research.hint' },
   { id: 'ollamaContext', section: 'assistant', group: 'work', label: 'settings.ollamaContext.label', hint: 'settings.ollamaContext.hint' },
   { id: 'toolDebug', section: 'assistant', group: 'work', label: 'settings.toolDebug.label', hint: 'settings.toolDebug.hint' },
+  { id: 'localStepLimit', section: 'assistant', group: 'route', label: 'settings.localStepLimit.label', hint: 'settings.localStepLimit.hint' },
   { id: 'supportFree', section: 'assistant', group: 'rules', label: 'print.supportFree', hint: 'print.supportFreeHint' },
   ...DESIGN_RULES.map((rule) => ({ id: `design.${rule}`, section: 'assistant' as const, group: 'rules', label: `print.design.${rule}.label`, hint: `print.design.${rule}.hint` })),
   { id: 'printers', section: 'print', group: 'profiles', label: 'print.printers', hint: 'settings.profiles.printers' },

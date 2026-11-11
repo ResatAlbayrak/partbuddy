@@ -43,6 +43,8 @@ describe('local agent step budget', () => {
     const unfinished = Array.from({ length: 25 }, (_, index) => ({ toolCalls: index === 24 ? ['execute'] : [] }));
     expect(reachedStepCap(unfinished)).toBe(true);
     expect(reachedStepCap(unfinished.slice(0, 24))).toBe(false);
+    expect(reachedStepCap(unfinished, 50)).toBe(false);
+    expect(reachedStepCap(Array.from({ length: 50 }, () => ({ toolCalls: ['execute'] })), 50)).toBe(true);
     expect(reachedStepCap([...unfinished.slice(0, -1), { toolCalls: [] }])).toBe(false);
   });
 });

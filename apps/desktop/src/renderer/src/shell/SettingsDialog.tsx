@@ -496,6 +496,39 @@ function OllamaContextSetting() {
   );
 }
 
+/** Per-request round budget for local models; no app restart required. */
+function LocalStepLimitSetting() {
+  const [limit, setLimit] = useState<25 | 50 | 100 | null>(null);
+  useEffect(() => {
+    let live = true;
+    void platform().settings.app().then((app) => {
+      if (live) setLimit(app.localStepLimit);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (limit === null) return null;
+  return (
+    <Segmented
+      id="localStepLimit"
+      value={String(limit)}
+      options={[
+        { id: '25', label: '25' },
+        { id: '50', label: '50' },
+        { id: '100', label: '100' },
+      ]}
+      onChange={(next) => {
+        const value = Number(next);
+        if (value !== 25 && value !== 50 && value !== 100) return;
+        setLimit(value);
+        void platform().settings.setApp({ key: 'localStepLimit', value }).then((app) => setLimit(app.localStepLimit));
+      }}
+      testId="settings-local-step-limit"
+    />
+  );
+}
+
 /**
  * Designing without support and the design rule groups (2026-11-07): kept with the print settings,
  * which the assistant reads. One copy for all rows, so no switch saves over another with a stale one.
@@ -925,6 +958,9 @@ export function SettingsDialog() {
                     </Setting>
                     <Setting id="ollamaContext">
                       <OllamaContextSetting />
+                    </Setting>
+                    <Setting id="localStepLimit">
+                      <LocalStepLimitSetting />
                     </Setting>
                   </Group>
                   <Group id="work">

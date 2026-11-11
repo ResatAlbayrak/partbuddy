@@ -512,7 +512,7 @@ if (!app.requestSingleInstanceLock()) {
     });
     if (updates.enabled && settingsStore.get('checkUpdates')) setTimeout(() => void updates.check(), 10_000);
     // Interface size, start behaviour and update check (2026-11-07): the size applies at once, the rest at the next start.
-    const appSettings = () => ({ zoom: settingsStore.get('zoom'), startPage: settingsStore.get('startPage'), checkUpdates: settingsStore.get('checkUpdates'), toolDebug: settingsStore.get('toolDebug') });
+    const appSettings = () => ({ zoom: settingsStore.get('zoom'), startPage: settingsStore.get('startPage'), checkUpdates: settingsStore.get('checkUpdates'), toolDebug: settingsStore.get('toolDebug'), localStepLimit: settingsStore.get('localStepLimit') });
     const applyZoom = () => {
       const zoom = settingsStore.get('zoom');
       mainWindow?.webContents.setZoomFactor(zoom);
@@ -649,6 +649,7 @@ if (!app.requestSingleInstanceLock()) {
       changed,
       log,
       contextSize: () => assistantSettings.ollamaContextSize(),
+      stepLimit: () => settingsStore.get('localStepLimit'),
       choices: assistantSettings,
       ...(process.env.PARTBUDDY_OLLAMA_URL ? { url: process.env.PARTBUDDY_OLLAMA_URL } : {}),
       ...(process.env.PARTBUDDY_STRATA_URL ? { strataUrl: process.env.PARTBUDDY_STRATA_URL } : {}),

@@ -33,6 +33,8 @@ export interface LocalAgentOptions {
   openAiServers?: { name: OpenAiServer['name']; url: string }[];
   /** Requested context window for local Ollama models. */
   contextSize?: () => LocalContextSize;
+  /** Configured maximum model rounds for each local request. */
+  stepLimit?: () => 25 | 50 | 100;
 }
 
 /** A model the route can run, with the server that runs it. */
@@ -355,6 +357,7 @@ export class LocalAgent implements AgentBackend {
         this.tested.add(model.option.id);
       }
       this.history.push(turn);
+      const maxSteps = this.options.stepLimit?.() ?? MAX_STEPS;
       const result = streamText({
         model: languageModel,
         instructions: instructionsFor(upstream, false),
@@ -365,7 +368,7 @@ export class LocalAgent implements AgentBackend {
             this.options.event(event);
           },
         }),
-        stopWhen: [stepCountIs(MAX_STEPS), repeatsItself],
+        stopWhen: [stepCountIs(maxSteps), repeatsItself],
         abortSignal: signal,
         providerOptions,
         // A local server that refuses a request refuses it again; the user gets its reason at once.
@@ -383,8 +386,8 @@ export class LocalAgent implements AgentBackend {
         this.options.event({ type: 'done', ok: false, durationMs: Date.now() - started, detail: 'failed' });
         return;
       }
-      if (reachedStepCap(steps)) {
-        this.options.event({ type: 'error', message: `PartBuddy stopped after ${MAX_STEPS} model rounds. The design may be incomplete. Continue with the existing design instead of restarting the task.` });
+      if (reachedStepCap(steps, maxSteps)) {
+        this.options.event({ type: 'error', message: `PartBuddy stopped after ${maxSteps} model rounds. The design may be incomplete. Continue with the existing design instead of restarting the task.` });
         this.options.event({ type: 'done', ok: false, durationMs: Date.now() - started, detail: 'error_max_turns' });
         return;
       }

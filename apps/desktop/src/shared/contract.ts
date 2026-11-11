@@ -366,11 +366,13 @@ export const zoomSchema = z.number().min(0.8).max(1.5);
 /** What PartBuddy shows when it starts: the start page or the last project. */
 export const startPageSchema = z.enum(['home', 'last']);
 /** The app-wide settings without a channel of their own, read and changed together. */
-export const appSettingsSchema = z.object({ zoom: zoomSchema, startPage: startPageSchema, checkUpdates: z.boolean(), toolDebug: z.boolean() }).strict();
+export const localStepLimitSchema = z.union([z.literal(25), z.literal(50), z.literal(100)]);
+export const appSettingsSchema = z.object({ zoom: zoomSchema, startPage: startPageSchema, checkUpdates: z.boolean(), toolDebug: z.boolean(), localStepLimit: localStepLimitSchema }).strict();
 export const appSettingRequestSchema = z.discriminatedUnion('key', [
   z.object({ key: z.literal('zoom'), value: zoomSchema }).strict(),
   z.object({ key: z.literal('startPage'), value: startPageSchema }).strict(),
   z.object({ key: z.literal('toolDebug'), value: z.boolean() }).strict(),
+  z.object({ key: z.literal('localStepLimit'), value: localStepLimitSchema }).strict(),
   z.object({ key: z.literal('checkUpdates'), value: z.boolean() }).strict(),
 ]);
 /** A section of the settings to put back to its defaults, or all of them. */

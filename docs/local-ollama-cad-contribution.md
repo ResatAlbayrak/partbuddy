@@ -80,6 +80,19 @@ Captured failed tool calls:
 
 **Still open:** Prove with the live SolidCraft runtime that erroneous `batch.commands` calls reach the normalizer (schema validation may reject malformed model input earlier); test whether the failure marker reduces false claims; verify the full TypeScript build and unit tests. This does not validate arbitrary CAD geometry, automatically correct topology coordinates, or address the silent stop at the local step budget.
 
+### Third tool-error report and 25-round limit (2026-11-11)
+
+**User observation:** A local Ollama run stopped after exactly 25 SolidCraft calls, despite substantial context still being available. The implementation has `MAX_STEPS = 25` via `stepCountIs(MAX_STEPS)`. This counts model rounds (which can contain multiple tool calls), **not context tokens**. The correlation to exactly 25 SolidCraft calls is consistent with one call per round, but the precise provider-side termination was not instrumented.
+
+**Captured errors:**
+- `describe_command({id:"solid.round"})` → unknown command; the expected edge-rounding command is `solid.fillet`.
+- `batch` with `solid.shell` and `faces: "[[50,35,32]]"` → `faces` must be an array of 3D points or face names, not a JSON string.
+- `batch` with `solid.union` → unknown command; `solid.combine` is mentioned in the SolidCraft engineering notes, but the exact boolean parameters must still be queried rather than guessed.
+
+**Implemented in `ce9456a` (unverified build):** Deterministic normalization of valid, stringified `solid.shell.faces` arrays for both `execute` and `batch`; validation of known nonexistent command names with actionable guidance; revised tool descriptions/notes and regression assertions; explicit reporting of an incomplete turn when the step budget ends with a tool call; a UI action to resume work on the existing model rather than resending the original construction request. An ordinary final text response at the exact step limit is not flagged as incomplete.
+
+**Tests still required:** Type-check and unit test the final branch, confirm the AI SDK passes malformed arguments to the normalizer rather than rejecting them at schema validation, and reproduce/verify the end-of-budget notice and continuation button in the Windows dev UI. Verify the app does not duplicate geometry on continuation.
+
 ## Open issues / follow-up work
 
 1. **Silent end of long tasks (priority):** `MAX_STEPS = 25` and `stopWhen: [stepCountIs(MAX_STEPS), repeatsItself]` exist in the local agent loop. The code currently treats a completed stream as successful unless it detects exact repeated rounds. **Hypothesis:** reaching the step limit can produce `done: true` without completion notice. This has **not yet been proven** to be the reason for the 19-query housing test; log the actual stop reason / step count and add an automated regression test.

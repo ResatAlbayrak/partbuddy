@@ -40,7 +40,9 @@ export const TOOL_NOTES = [
     'the intended edge, not on its adjacent face. Check the actual edge endpoints to distinguish vertical ' +
     'from horizontal edges. Never guess coordinates or rely on stale topology.',
   '- CAD batch arguments: `batch.commands` must be a real JSON array of objects, not a string of JSON. ' +
-    'A failed batch might roll back all changes; verify parameters and bodies before using them.',
+    'For `sketch.rectangle.two_point`, use `p0: ["X", "Y"]` and `p1: ["X", "Y"]`, never a ' +
+    'one-item array containing both coordinates separated by a comma. A failed batch can roll back all changes; ' +
+    'verify parameters and bodies before using them.',
   '- Reserved parameter names: `floor` is an expression function, not a valid parameter name. ' +
     'Use `floorThickness` instead and update every reference.',
   '- CAD command names: SolidCraft has `solid.fillet` (not `solid.round`) and `solid.combine` (not ' +

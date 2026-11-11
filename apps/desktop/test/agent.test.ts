@@ -69,6 +69,49 @@ describe('tool policy', () => {
     expect(cadToolDescription('batch', 'Batch tools')).toContain('JSON array');
   });
 
+  it('repairs doubly encoded batch arrays and literal escaped quotes', () => {
+    const commands = [{ command: 'sketch.create', params: { name: 'USB_C_Sketch', plane: 'XY' } }];
+    const asJson = JSON.stringify(commands);
+    expect(normalizeToolArguments('batch', { commands: JSON.stringify(asJson) }).commands).toEqual(commands);
+    const escaped = asJson.replace(/"/g, '\\"');
+    expect(normalizeToolArguments('batch', { commands: escaped }).commands).toEqual(commands);
+    expect(normalizeToolArguments('batch', { commands: escaped.replace(/\\/g, '\\\\') }).commands).toEqual(commands);
+    // Still subject to the regular tool policy after normalization.
+    const forbidden = JSON.stringify([{ command: 'file.export', params: { path: 'design.step' } }]);
+    expect(decide('batch', normalizeToolArguments('batch', { commands: forbidden })).allow).toBe(false);
+    // Never run syntactically invalid, structurally invalid, or non-array data.
+    expect(normalizeToolArguments('batch', { commands: '[{"command":"sketch.create"' }).commands).toBe('[{"command":"sketch.create"');
+    expect(normalizeToolArguments('batch', { commands: '[{"params":{}}]' }).commands).toBe('[{"params":{}}]');
+    expect(normalizeToolArguments('batch', { commands: '["not a command"]' }).commands).toBe('["not a command"]');
+  });
+
+  it('splits two-coordinate sketch expressions without changing the expressions', () => {
+    const sketch = {
+      command: 'sketch.rectangle.two_point',
+      params: {
+        p0: ['USBCOffset + WallThickness, USBCHeight / 2'],
+        p1: ['USBCOffset + WallThickness + USBCWidth, USBCHeight / 2 + USBCHeight'],
+      },
+    };
+    const wanted = {
+      command: 'sketch.rectangle.two_point',
+      params: {
+        p0: ['USBCOffset + WallThickness', 'USBCHeight / 2'],
+        p1: ['USBCOffset + WallThickness + USBCWidth', 'USBCHeight / 2 + USBCHeight'],
+      },
+    };
+    expect(normalizeToolArguments('batch', { commands: [sketch] }).commands).toEqual([wanted]);
+    expect(normalizeToolArguments('execute', sketch)).toEqual(wanted);
+    expect(normalizeToolArguments('batch', { commands: JSON.stringify([sketch]) }).commands).toEqual([wanted]);
+    const nested = { command: 'sketch.rectangle.two_point', params: { p0: ['max(A,B), H/2'], p1: ['X', 'Y'] } };
+    expect(normalizeToolArguments('batch', { commands: [nested] }).commands).toEqual([
+      { ...nested, params: { p0: ['max(A,B)', 'H/2'], p1: ['X', 'Y'] } },
+    ]);
+    // Ambiguous values are forwarded unchanged so SolidCraft can reject them safely.
+    const malformed = { command: 'sketch.rectangle.two_point', params: { p0: ['A,B,C'], p1: ['A,'] } };
+    expect(normalizeToolArguments('batch', { commands: [malformed] }).commands).toEqual([malformed]);
+  });
+
   it('normalizes shell face arrays in batches and direct execute calls', () => {
     const shell = { command: 'solid.shell', params: { faces: '[[50,35,32]]', thickness: 'wall' } };
     expect(normalizeToolArguments('batch', { commands: [shell] }).commands).toEqual([{ command: 'solid.shell', params: { faces: [[50, 35, 32]], thickness: 'wall' } }]);
